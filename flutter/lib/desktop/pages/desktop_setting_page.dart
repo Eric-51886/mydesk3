@@ -1469,7 +1469,7 @@ class _NetworkState extends State<_Network> with AutomaticKeepAliveClientMixin {
                 Obx(() => _LabeledTextField(context, 'API Server',
                     apiController, apiErrMsg.value, enabled, secure)),
                 _LabeledTextField(
-                    context, 'Key', keyController, '', enabled, secure),
+                    context, 'Key', keyController, '', enabled, secure: true),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [_Button('Apply', submit, enabled: enabled)],

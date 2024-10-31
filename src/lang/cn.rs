@@ -458,7 +458,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Restore", "恢复"),
         ("Minimize", "最小化"),
         ("Maximize", "最大化"),
-        ("Your Device", "你的设备"),
+        ("Your Device", "业务编码"),
         ("empty_recent_tip", "无最近会话，是时候开始新会话了！"),
         ("empty_favorite_tip", "还没有收藏的被控端？找一个人连接并将其添加到收藏吧！"),
         ("empty_lan_tip", "情况不妙，似乎未发现任何被控端！"),

@@ -166,7 +166,8 @@ class WebHomePage extends StatelessWidget {
       // backgroundColor: MyTheme.grayBg,
       appBar: AppBar(
         centerTitle: true,
-        title: Text("${bind.mainGetAppNameSync()} (Preview)"),
+        //title: Text("${bind.mainGetAppNameSync()} (Preview)"),
+        title: Text("中银会议"),
         actions: connectionPage.appBarActions,
       ),
       body: connectionPage,
