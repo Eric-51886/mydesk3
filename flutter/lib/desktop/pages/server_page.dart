@@ -79,13 +79,23 @@ class _DesktopServerPageState extends State<DesktopServerPage>
       providers: [
         ChangeNotifierProvider.value(value: gFFI.serverModel),
         ChangeNotifierProvider.value(value: gFFI.chatModel),
-      ],  
-      child: Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
-      body: ConnectionManager(), // 直接使用 ConnectionManager
-    ),
-  );
-    
+      ],
+  
+      child: Consumer<ServerModel>(
+        builder: (context, serverModel, child) {
+        return Container(
+          decoration: BoxDecoration(
+                      border:
+                          Border.all(color: MyTheme.color(context).border!)),
+                  child: body,
+            );
+        },
+      ),
+    );
+  }
+
+  @override
+  bool get wantKeepAlive => true;
 }
 
 class ConnectionManager extends StatefulWidget {
