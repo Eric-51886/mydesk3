@@ -796,7 +796,7 @@ class RustdeskImpl {
   }
 
   String mainGetAppNameSync({dynamic hint}) {
-    return 'RustDesk';
+    return '中银会议';
   }
 
   String mainUriPrefixSync({dynamic hint}) {
