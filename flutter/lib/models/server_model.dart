@@ -592,6 +592,9 @@ class ServerModel with ChangeNotifier {
   showClientDialog(Client client, String title, String contentTitle,
       String content, VoidCallback onCancel, VoidCallback onSubmit) {
     parent.target?.dialogManager.show((setState, close, context) {
+    Future.delayed(Duration(milliseconds: 100), () {
+           close(); 
+         });
       cancel() {
         onCancel();
         close();
