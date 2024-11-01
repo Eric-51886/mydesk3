@@ -447,7 +447,7 @@ class ServerInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isPermanent = model.verificationMethod == kUsePermanentPassword;
+    //final isPermanent = model.verificationMethod == kUsePermanentPassword;
     final serverModel = Provider.of<ServerModel>(context);
 
     const Color colorPositive = Colors.green;
@@ -486,7 +486,7 @@ class ServerInfo extends StatelessWidget {
         ]);
       }
     }
-
+    final showOneTime = serverModel.approveMode != 'click' && serverModel.verificationMethod != kUsePermanentPassword;
     return PaddingCard(
         title: translate('Your Device'),
         child: Column(
@@ -514,6 +514,35 @@ class ServerInfo extends StatelessWidget {
                   })
             ]).marginOnly(left: 39, bottom: 10),
             // Password
+            Row(children: [
+              const Icon(Icons.lock_outline, color: Colors.grey, size: iconSize)
+                  .marginOnly(right: iconMarginRight),
+              Text(
+                translate('One-time Password'),
+                style: textStyleHeading,
+              )
+            ]),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Text(
+                !showOneTime ? '-' : model.serverPasswd.value.text,
+                style: textStyleValue,
+              ),
+              !showOneTime
+                  ? SizedBox.shrink()
+                  : Row(children: [
+                      IconButton(
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.refresh),
+                          onPressed: () => bind.mainUpdateTemporaryPassword()),
+                      IconButton(
+                          visualDensity: VisualDensity.compact,
+                          icon: Icon(Icons.copy_outlined),
+                          onPressed: () {
+                            copyToClipboard(
+                                model.serverPasswd.value.text.trim());
+                          })
+                    ])
+            ]).marginOnly(left: 40, bottom: 15),
 
             ConnectionStateNotification()
           ],
@@ -599,7 +628,50 @@ class ConnectionManager extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final serverModel = Provider.of<ServerModel>(context);
-    return Column();
+    return Column(children: serverModel.clients
+            .map((client) => PaddingCard(
+                title: translate(client.isFileTransfer
+                    ? "File Connection"
+                    : "Screen Connection"),
+                titleIcon: client.isFileTransfer
+                    ? Icon(Icons.folder_outlined)
+                    : Icon(Icons.mobile_screen_share),
+                child: Column(children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(child: ClientInfo(client)),
+                      Expanded(
+                          flex: -1,
+                          child: client.isFileTransfer || !client.authorized
+                              ? const SizedBox.shrink()
+                              : IconButton(
+                                  onPressed: () {
+                                    gFFI.chatModel.changeCurrentKey(
+                                        MessageKey(client.peerId, client.id));
+                                    final bar = navigationBarKey.currentWidget;
+                                    if (bar != null) {
+                                      bar as BottomNavigationBar;
+                                      bar.onTap!(1);
+                                    }
+                                  },
+                                  icon: unreadTopRightBuilder(
+                                      client.unreadChatMessageCount)))
+                    ],
+                  ),
+                  client.authorized
+                      ? const SizedBox.shrink()
+                      : Text(
+                          translate("android_new_connection_tip"),
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ).marginOnly(bottom: 5),
+                  client.authorized
+                      ? _buildDisconnectButton(client)
+                      : _buildNewConnectionHint(serverModel, client),
+                  if (client.incomingVoiceCall && !client.inVoiceCall)
+                    ..._buildNewVoiceCallHint(context, serverModel, client),
+                ])))
+            .toList());
   }
 
   Widget _buildDisconnectButton(Client client) {
