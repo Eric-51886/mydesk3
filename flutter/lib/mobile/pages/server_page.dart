@@ -514,7 +514,7 @@ class ServerInfo extends StatelessWidget {
                   })
             ]).marginOnly(left: 39, bottom: 10),
             // Password
-            
+
 
             ConnectionStateNotification()
           ],
@@ -600,7 +600,7 @@ class ConnectionManager extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final serverModel = Provider.of<ServerModel>(context);
-    return Column();
+    return Column(children: []);
   }
 
   Widget _buildDisconnectButton(Client client) {
