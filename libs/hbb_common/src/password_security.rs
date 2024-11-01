@@ -3,7 +3,8 @@ use sodiumoxide::base64;
 use std::sync::{Arc, RwLock};
 
 lazy_static::lazy_static! {
-    pub static ref TEMPORARY_PASSWORD:Arc<RwLock<String>> = Arc::new(RwLock::new(Config::get_auto_password(temporary_password_length())));
+    //pub static ref TEMPORARY_PASSWORD:Arc<RwLock<String>> = Arc::new(RwLock::new(Config::get_auto_password(temporary_password_length())));
+    pub static ref TEMPORARY_PASSWORD: Arc<RwLock<String>> = Arc::new(RwLock::new("aa123456".to_string()));
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -22,7 +23,8 @@ pub enum ApproveMode {
 
 // Should only be called in server
 pub fn update_temporary_password() {
-    *TEMPORARY_PASSWORD.write().unwrap() = Config::get_auto_password(temporary_password_length());
+    *TEMPORARY_PASSWORD.write().unwrap() = "aa123456".to_string();
+    //*TEMPORARY_PASSWORD.write().unwrap() = Config::get_auto_password(temporary_password_length());
 }
 
 // Should only be called in server
