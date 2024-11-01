@@ -392,28 +392,7 @@ class ServerModel with ChangeNotifier {
       if (!await AndroidPermissionManager.check(kManageExternalStorage)) {
         await AndroidPermissionManager.request(kManageExternalStorage);
       }
-      final res = await parent.target?.dialogManager
-          .show<bool>((setState, close, context) {
-        submit() => close(true);
-        return CustomAlertDialog(
-          title: Row(children: [
-            const Icon(Icons.warning_amber_sharp,
-                color: Colors.redAccent, size: 28),
-            const SizedBox(width: 10),
-            Text(translate("Warning")),
-          ]),
-          content: Text(translate("android_service_will_start_tip")),
-          actions: [
-            dialogButton("Cancel", onPressed: close, isOutline: true),
-            dialogButton("OK", onPressed: submit),
-          ],
-          onSubmit: submit,
-          onCancel: close,
-        );
-      });
-      if (res == true) {
-        startService();
-      }
+      startService();
       
     }
   }
@@ -584,7 +563,14 @@ class ServerModel with ChangeNotifier {
   }
 
   void showLoginDialog(Client client) {
-    sendLoginResponse(client, true);
+     showClientDialog(
+      client,
+      client.isFileTransfer ? "File Connection" : "Screen Connection",
+      'Do you accept?',
+      'android_new_connection_tip',
+      () => sendLoginResponse(client, false),
+      () => sendLoginResponse(client, true),
+    );
   }
 
   handleVoiceCall(Client client, bool accept) {
