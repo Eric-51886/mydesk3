@@ -150,7 +150,7 @@ class HomePageState extends State<HomePage> {
         ],
       );
     }
-    return Text("中银会议");
+    return Text("银联会议");
   }
 }
 
@@ -167,7 +167,7 @@ class WebHomePage extends StatelessWidget {
       appBar: AppBar(
         centerTitle: true,
         //title: Text("${bind.mainGetAppNameSync()} (Preview)"),
-        title: Text("中银会议"),
+        title: Text("银联会议"),
         actions: connectionPage.appBarActions,
       ),
       body: connectionPage,
