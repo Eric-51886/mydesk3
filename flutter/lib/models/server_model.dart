@@ -385,13 +385,13 @@ class ServerModel with ChangeNotifier {
         stopService();
       }
     } else {
-      await checkRequestNotificationPermission();
-      if (bind.mainGetLocalOption(key: kOptionDisableFloatingWindow) != 'Y') {
-        await checkFloatingWindowPermission();
-      }
-      if (!await AndroidPermissionManager.check(kManageExternalStorage)) {
-        await AndroidPermissionManager.request(kManageExternalStorage);
-      }
+      // await checkRequestNotificationPermission();
+      // if (bind.mainGetLocalOption(key: kOptionDisableFloatingWindow) != 'Y') {
+      //   await checkFloatingWindowPermission();
+      // }
+      // if (!await AndroidPermissionManager.check(kManageExternalStorage)) {
+      //   await AndroidPermissionManager.request(kManageExternalStorage);
+      // }
       startService();
       
     }
