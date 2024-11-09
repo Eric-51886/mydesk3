@@ -131,9 +131,10 @@ class MainService : Service() {
                             startCapture()
                         }
                         onClientAuthorizedNotification(id, type, username, peerId)
-                    } else {
-                        loginRequestNotification(id, type, username, peerId)
-                    }
+                    } 
+					// else {
+     //                    loginRequestNotification(id, type, username, peerId)
+     //                }
                 } catch (e: JSONException) {
                     e.printStackTrace()
                 }
