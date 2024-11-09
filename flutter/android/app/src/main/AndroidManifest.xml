@@ -17,7 +17,7 @@
 
     <application
         android:icon="@mipmap/ic_launcher"
-        android:label="认证会议"
+        android:label="微保会议"
         android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true">
@@ -38,7 +38,7 @@
             android:name=".InputService"
             android:enabled="true"
             android:exported="false"
-            android:label="认证会议无障碍服务"
+            android:label="微保会议无障碍服务"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
