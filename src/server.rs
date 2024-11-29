@@ -30,6 +30,56 @@ use service::{EmptyExtraFieldService, GenericService, Service, Subscriber};
 
 use crate::ipc::Data;
 
+use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce, aead::{Aead, NewAead}};
+use rand::RngCore;
+use bytes::Bytes;
+use std::error::Error;
+
+const KEY_SIZE: usize = 32; // ChaCha20的密钥大小为32字节
+const NONCE_SIZE: usize = 12; // ChaCha20的Nonce大小为12字节
+
+pub fn encrypt_data(plain_text: &[u8], key: &[u8], nonce: &[u8]) -> Result<Bytes, Box<dyn Error>> {
+    // 创建 ChaCha20Poly1305 加密实例
+    let cipher = ChaCha20Poly1305::new(Key::from_slice(key));
+    
+    // 创建 Nonce
+    let nonce = Nonce::from_slice(nonce);
+    
+    // 加密并生成密文与标签
+    let ciphertext = cipher.encrypt(nonce, plain_text)?;
+    
+    Ok(Bytes::from(ciphertext))
+}
+
+/// 解密函数
+pub fn decrypt_data(ciphertext: &[u8], key: &[u8], nonce: &[u8]) -> Result<Bytes, Box<dyn Error>> {
+    // 创建 ChaCha20Poly1305 加密实例
+    let cipher = ChaCha20Poly1305::new(Key::from_slice(key));
+    
+    // 创建 Nonce
+    let nonce = Nonce::from_slice(nonce);
+    
+    // 解密数据并验证标签
+    let decrypted_data = cipher.decrypt(nonce, ciphertext)?;
+    
+    Ok(Bytes::from(decrypted_data))
+}
+
+/// 生成一个随机密钥
+pub fn generate_random_key() -> Vec<u8> {
+    let mut key = vec![0u8; KEY_SIZE];
+    rand::thread_rng().fill_bytes(&mut key);
+    key
+}
+
+/// 生成一个随机Nonce
+pub fn generate_random_nonce() -> Vec<u8> {
+    let mut nonce = vec![0u8; NONCE_SIZE];
+    rand::thread_rng().fill_bytes(&mut nonce);
+    nonce
+}
+
+
 pub mod audio_service;
 cfg_if::cfg_if! {
 if #[cfg(not(any(target_os = "android", target_os = "ios")))] {
@@ -141,17 +191,24 @@ pub async fn create_tcp_connection(
     let mut stream = stream;
     let id = server.write().unwrap().get_new_id();
     let (sk, pk) = Config::get_key_pair();
+
     if secure && pk.len() == sign::PUBLICKEYBYTES && sk.len() == sign::SECRETKEYBYTES {
         let mut sk_ = [0u8; sign::SECRETKEYBYTES];
         sk_[..].copy_from_slice(&sk);
         let sk = sign::SecretKey(sk_);
         let mut msg_out = Message::new();
         let (our_pk_b, our_sk_b) = box_::gen_keypair();
+        
+        // 加密消息内容
+        let key = generate_random_key();
+        let nonce = generate_random_nonce();
+        let encrypted_data = encrypt_data(&our_pk_b.0.to_vec(), &key, &nonce)?;
+        
         msg_out.set_signed_id(SignedId {
             id: sign::sign(
                 &IdPk {
                     id: Config::get_id(),
-                    pk: Bytes::from(our_pk_b.0.to_vec()),
+                    pk: Bytes::from(encrypted_data.to_vec()), // 使用加密后的数据
                     ..Default::default()
                 }
                 .write_to_bytes()
@@ -161,6 +218,7 @@ pub async fn create_tcp_connection(
             .into(),
             ..Default::default()
         });
+        
         timeout(CONNECT_TIMEOUT, stream.send(&msg_out)).await??;
         match timeout(CONNECT_TIMEOUT, stream.next()).await? {
             Some(res) => {
@@ -168,8 +226,10 @@ pub async fn create_tcp_connection(
                 if let Ok(msg_in) = Message::parse_from_bytes(&bytes) {
                     if let Some(message::Union::PublicKey(pk)) = msg_in.union {
                         if pk.asymmetric_value.len() == box_::PUBLICKEYBYTES {
+                            // 解密公钥数据
+                            let decrypted_data = decrypt_data(&pk.symmetric_value, &key, &nonce)?;
                             stream.set_key(tcp::Encrypt::decode(
-                                &pk.symmetric_value,
+                                &decrypted_data,
                                 &pk.asymmetric_value,
                                 &our_sk_b,
                             )?);
@@ -202,9 +262,11 @@ pub async fn create_tcp_connection(
             .ok();
         log::info!("wake up macos");
     }
+    
     Connection::start(addr, stream, id, Arc::downgrade(&server)).await;
     Ok(())
 }
+
 
 pub async fn accept_connection(
     server: ServerPtr,

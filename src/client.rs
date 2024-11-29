@@ -3403,14 +3403,22 @@ async fn hc_connection_(
 
     let host = check_port(&rendezvous_server, RENDEZVOUS_PORT);
     let mut conn = connect_tcp(host.clone(), CONNECT_TIMEOUT).await?;
+    
+    // 获取密钥并对连接进行加密
     let key = crate::get_key(true).await;
     crate::secure_tcp(&mut conn, &key).await?;
+    
+    // 健康检查消息
     let mut msg_out = RendezvousMessage::new();
     msg_out.set_hc(HealthCheck {
         token,
         ..Default::default()
     });
-    conn.send(&msg_out).await?;
+
+    // 加密健康检查消息
+    let encrypted_msg = encrypt_data(&msg_out.write_to_bytes()?, &key, &generate_random_nonce())?;
+    conn.send(&encrypted_msg).await?;
+
     loop {
         tokio::select! {
             res = rx.recv() => {
@@ -3423,10 +3431,14 @@ async fn hc_connection_(
                 last_recv_msg = Instant::now();
                 let bytes = res.ok_or_else(|| anyhow!("Rendezvous connection is reset by the peer"))??;
                 if bytes.is_empty() {
-                    conn.send_bytes(bytes::Bytes::new()).await?;
-                    continue; // heartbeat
+                    conn.send_bytes(bytes::Bytes::new()).await?; // heartbeat
+                    continue;
                 }
-                let msg = RendezvousMessage::parse_from_bytes(&bytes)?;
+
+                // 解密收到的消息
+                let decrypted_msg = decrypt_data(&bytes, &key, &generate_random_nonce())?;
+                let msg = RendezvousMessage::parse_from_bytes(&decrypted_msg)?;
+
                 match msg.union {
                     Some(rendezvous_message::Union::RegisterPkResponse(rpr)) => {
                         if rpr.keep_alive > 0 {
@@ -3438,7 +3450,6 @@ async fn hc_connection_(
                 }
             }
             _  = timer.tick() => {
-                // https://www.emqx.com/en/blog/mqtt-keep-alive
                 if last_recv_msg.elapsed().as_millis() as u64 > keep_alive as u64 * 3 / 2 {
                     bail!("HC connection is timeout");
                 }
@@ -3447,6 +3458,7 @@ async fn hc_connection_(
     }
     Ok(())
 }
+
 
 pub mod peer_online {
     use hbb_common::{
