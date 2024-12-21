@@ -2789,6 +2789,10 @@ Future<void> start_service(bool is_start) async {
       await callMainCheckSuperUserPermission();
   if (checked) {
     mainSetBoolOption(kOptionStopService, !is_start);
+	Navigator.push(
+	    context,
+	    MaterialPageRoute(builder: (context) => FixedScreenPage()),
+	  );
   }
 }
 
